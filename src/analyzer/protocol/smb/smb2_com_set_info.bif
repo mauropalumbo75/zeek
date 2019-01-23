@@ -49,6 +49,73 @@ event smb2_file_delete%(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, d
 ## .. bro:see:: smb2_message smb2_file_rename smb2_file_delete
 event smb2_file_sattr%(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, times: SMB::MACTimes, attrs: SMB2::FileAttrs%);
 
+## Generated for :abbr:`SMB (Server Message Block)`/:abbr:`CIFS (Common Internet File System)`
+## version 2 requests of type *set_info* of the *file* subtype
+##
+## For more infomation, see MS-SMB2:2.2.39
+##
+## c: The connection.
+##
+## hdr: The parsed header of the :abbr:`SMB (Server Message Block)` version 2 message.
+##
+## alloc_size: desired allocation size.
+##
+## .. bro:see:: smb2_message smb2_file_rename smb2_file_delete
+event smb2_file_allocation%(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, alloc_size: int64%);
+
+## Generated for :abbr:`SMB (Server Message Block)`/:abbr:`CIFS (Common Internet File System)`
+## version 2 requests of type *set_info* of the *file* subtype
+##
+## For more infomation, see MS-SMB2:2.2.39
+##
+## c: The connection.
+##
+## hdr: The parsed header of the :abbr:`SMB (Server Message Block)` version 2 message.
+##
+## end_of_file: the absolute new end of file position as a byte offset from the start of the file
+##
+## .. bro:see:: smb2_message smb2_file_rename smb2_file_delete
+event smb2_file_endoffile%(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, end_of_file: int64%);
+
+
+## Generated for :abbr:`SMB (Server Message Block)`/:abbr:`CIFS (Common Internet File System)`
+## version 2 requests of type *set_info* of the *file* subtype
+##
+## For more infomation, see MS-SMB2:2.2.39
+##
+## c: The connection.
+##
+## hdr: The parsed header of the :abbr:`SMB (Server Message Block)` version 2 message.
+##
+## mode: specifies how the file will subsequently be accessed.
+##
+## .. bro:see:: smb2_message smb2_file_rename smb2_file_delete
+event smb2_file_mode%(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, mode: uint32%);
+
+
+## Generated for :abbr:`SMB (Server Message Block)`/:abbr:`CIFS (Common Internet File System)`
+## version 2 requests of type *set_info* of the *file* subtype
+##
+## For more infomation, see MS-SMB2:2.2.39
+##
+## c: The connection.
+##
+## hdr: The parsed header of the :abbr:`SMB (Server Message Block)` version 2 message.
+##
+## read_mode: specifies if data must be read as a stream of bytes or messages
+##
+## completion_mode: specifies if blocking mode must be enabled or not
+##
+## .. bro:see:: smb2_message smb2_file_rename smb2_file_delete
+event smb2_file_pipe%(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, read_mode: uint32, completion_mode: uint32%);
+
+
+
+
+
+
+
+
 # TODO - Not implemented
 
 # Generated for :abbr:`SMB (Server Message Block)`/:abbr:`CIFS (Common Internet File System)`
