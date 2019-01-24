@@ -89,6 +89,33 @@ refine connection SMB_Conn += {
 		return true;
 		%}
 
+	#TODO not sure how to handle multiple full_ea file information
+	function proc_smb2_set_info_request_file_fullea(val: SMB2_file_fullea_info): bool
+		%{
+		if ( smb2_file_fullea )
+			BifEvent::generate_smb2_file_fullea(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+							    smb2_string2stringval(${val.ea_name}),
+							    smb2_string2stringval(${val.ea_value}));
+
+		return true;
+		%}
+
+	function proc_smb2_set_info_request_file_link(val: SMB2_file_link_info): bool
+		%{
+		if ( smb2_file_link )
+			BifEvent::generate_smb2_file_link(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+							    ${val.root_directory},
+							    smb2_string2stringval(${val.file_name}));
+
+		return true;
+		%}
+
 	function proc_smb2_set_info_request_file_mode(val: SMB2_file_mode_info): bool
 		%{
 		if ( smb2_file_mode )
@@ -108,13 +135,84 @@ refine connection SMB_Conn += {
 			                                    bro_analyzer()->Conn(),
 			                                    BuildSMB2HeaderVal(${val.sir.header}),
 			                                    BuildSMB2GUID(${val.sir.file_id}),
-			                                    ${val.real_mode},
+			                                    ${val.read_mode},
 							    ${val.completion_mode});
 
 		return true;
 		%}
 
-};
+	function proc_smb2_set_info_request_file_position(val: SMB2_file_position_info): bool
+		%{
+		if ( smb2_file_position )
+			BifEvent::generate_smb2_file_position(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+			                                    ${val.current_byte_offset});
+
+		return true;
+		%}
+
+	function proc_smb2_set_info_request_file_shortname(val: SMB2_file_shortname_info): bool
+		%{
+		if ( smb2_file_shortname )
+			BifEvent::generate_smb2_file_shortname(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+							    smb2_string2stringval(${val.filename}));
+
+		return true;
+		%}
+
+	function proc_smb2_set_info_request_file_validdatalenght(val: SMB2_file_validdatalenght_info): bool
+		%{
+		if ( smb2_file_validdatalenght )
+			BifEvent::generate_smb2_file_validdatalenght(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+							    ${val.valid_data_lenght});
+
+		return true;
+		%}
+
+	function proc_smb2_set_info_request_file_fscontrol(val: SMB2_file_fscontrol_info): bool
+		%{
+
+		RecordVal* r = new RecordVal(BifType::Record::SMB2::Fscontrol);
+
+		r->Assign(0, val_mgr->GetInt(${val.free_space_start_filtering}));
+		r->Assign(1, val_mgr->GetInt(${val.free_space_start_threshold}));
+		r->Assign(2, val_mgr->GetCount(${val.free_space_stop_filtering}));
+		r->Assign(3, val_mgr->GetCount(${val.default_quota_threshold}));
+		r->Assign(4, val_mgr->GetCount(${val.default_quota_limit}));
+		r->Assign(5, val_mgr->GetCount(${val.file_system_control_flags}));
+
+		if ( smb2_file_fscontrol )
+			BifEvent::generate_smb2_file_fscontrol(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+							    r);
+		return true;
+		%}
+
+	function proc_smb2_set_info_request_file_fsobjectid(val: SMB2_file_fsobjectid_info): bool
+		%{
+		if ( smb2_file_fsobjectid )
+			BifEvent::generate_smb2_file_fsobjectid(bro_analyzer(),
+			                                    bro_analyzer()->Conn(),
+			                                    BuildSMB2HeaderVal(${val.sir.header}),
+			                                    BuildSMB2GUID(${val.sir.file_id}),
+							    BuildSMB2GUID(${val.object_id}),
+							    smb2_string2stringval(${val.extended_info}));
+
+		return true;
+		%}
+
+}
+
 
 type SMB2_file_basic_info(sir: SMB2_set_info_request) = record {
 	creation_time    : SMB_timestamp;
@@ -159,18 +257,18 @@ type SMB2_file_fullea_info(sir: SMB2_set_info_request) = record {
 	flags		  : uint8;
 	ea_name_lenght    : uint8;
 	ea_value_lenght	  : uint16;
-	ea_name		  : char[ea_name_lenght]; 
-	ea_value	  : bytestring &length = ea_value_lenght;
+	ea_name		  : SMB2_string(ea_name_lenght); 
+	ea_value	  : SMB2_string(ea_value_lenght);
 } &let {
 	proc: bool = $context.connection.proc_smb2_set_info_request_file_fullea(this);
 };
 
 type SMB2_file_link_info(sir: SMB2_set_info_request) = record {
-	replace_if_exists : bool;
-	reserved	  : uint8[7];   #not used...
+	replace_if_exists : uint8;	#TODO this is a bool, not sure it is correct here
+	reserved	  : uint8[7];   #ignored...
 	root_directory 	  : uint64;
 	file_name_lenght  : uint32;
-	file_name	  : bytestring &length = file_name_lenght;
+	file_name	  : SMB2_string(file_name_lenght);
 } &let {
 	proc: bool = $context.connection.proc_smb2_set_info_request_file_link(this);
 };
@@ -195,8 +293,8 @@ type SMB2_file_position_info(sir: SMB2_set_info_request) = record {
 };
 
 type SMB2_file_shortname_info(sir: SMB2_set_info_request) = record {
-	file_name_lenght  : uint32;
-	file_name	  : bytestring &length = file_name_lenght;
+	filename_lenght  : uint32;
+	filename	  : SMB2_string(filename_lenght);
 } &let {
 	proc: bool = $context.connection.proc_smb2_set_info_request_file_shortname(this);
 };
@@ -221,7 +319,7 @@ type SMB2_file_fscontrol_info(sir: SMB2_set_info_request) = record {
 
 type SMB2_file_fsobjectid_info(sir: SMB2_set_info_request) = record {
 	object_id  	: SMB2_guid;
-	extended_info	: bytestring &lenght = 48;	
+	extended_info	: SMB2_string(48);	
 } &let {
 	proc: bool = $context.connection.proc_smb2_set_info_request_file_fsobjectid(this);
 };
@@ -239,8 +337,8 @@ type SMB2_set_info_file_class(sir: SMB2_set_info_request) = case sir.info_level 
 	SMB2_FILE_POSITION_INFO    	-> file_position       	: SMB2_file_position_info(sir);
 	SMB2_FILE_SHORTNAME_INFO      	-> file_shortname      	: SMB2_file_shortname_info(sir);
 	SMB2_FILE_VALIDDATALENGHT_INFO 	-> file_validdatalenght	: SMB2_file_validdatalenght_info(sir);
-	SMB2_FILE_FSCONTROL_INFO 	-> file_fscontrol     	: SMB2_file_fscontrol(sir);
-	SMB2_FILE_FSOBJECTID_INFO	-> file_fsobjectid	: SMB2_file_fsobjectid(sir);
+	SMB2_FILE_FSCONTROL_INFO 	-> file_fscontrol     	: SMB2_file_fscontrol_info(sir);
+	SMB2_FILE_FSOBJECTID_INFO	-> file_fsobjectid	: SMB2_file_fsobjectid_info(sir);
 	default                    	-> info_file_unhandled  : empty;
 };
 
