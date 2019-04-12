@@ -100,6 +100,20 @@ refine connection SMB_Conn += {
 		std::map<uint64,uint64> smb2_request_tree_id;
 	%}
 
+	function BuildSMB2CreateContextVal(cc: SMB2_create_context_value): BroVal
+		%{
+		RecordVal* r = new RecordVal(BifType::Record::SMB2::CreateContextValue);
+
+		r->Assign(0, val_mgr->GetCount(${cc.next_offset}));
+		//r->Assign(1, val_mgr->GetCount(${cc.name_offset}));
+		//r->Assign(2, val_mgr->GetCount(${cc.name_len}));
+		//r->Assign(3, val_mgr->GetCount(${cc.data_offset}));
+		//r->Assign(4, val_mgr->GetCount(${cc.data_len}));
+
+		return r;
+		%}
+
+
 	function BuildSMB2ContextVal(ncv: SMB3_negotiate_context_value): BroVal
 		%{
 		RecordVal* r = new RecordVal(BifType::Record::SMB2::NegotiateContextValue);
